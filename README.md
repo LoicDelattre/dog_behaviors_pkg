@@ -1,6 +1,20 @@
 ###on dog robot###
 First run in seperate terminals:
 
+LIBRAIRIES:
+
+**Turtlebot ROS**
+$roslaunch turtlebot3_bringup turtlebot3_robot.launch 
+
+
+**Camera ROS**
+$roslaunch usb_cam usb_cam-test.launch
+
+**Sound ros package**
+$rosrun sound_play soundplay_node.py
+
+OWN CODE:
+$cd catkin_ws/src/dog_behaviors_pkg/src
 **For publishing images to pc (debug)**
 $python3 image_publisher.py 
 
