@@ -19,6 +19,7 @@ def main():
     # Create a publisher (does not send data yet)
     pub = rospy.Publisher("/sound_type", String, queue_size=10)
 
+    sub = rospy.Subscriber("/sound_type", String, sound_callback)
     
     rospy.spin()
     
