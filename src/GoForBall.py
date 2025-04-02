@@ -46,6 +46,9 @@ class TurtlebotVisionController:
         self.firstImageFlag = False
         self.not_going_to_ball = True
 
+        self.maxTimeSinceBallSeen = 8.0
+        self.timeBallSeen = 0.0
+
     def computeFPS(self):
         current_time = time.time()
 
@@ -105,6 +108,7 @@ class TurtlebotVisionController:
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if contours:
+            self.timeBallSeen = time.time()
             self.explorer_publisher.publish(1)
             # Find the largest red object
             largest_contour = max(contours, key=cv2.contourArea)
@@ -144,7 +148,10 @@ class TurtlebotVisionController:
                 twist_msg.linear.x = self.forward_speed
                 twist_msg.angular.z = self.search_turn_speed  # Rotate to search
         else:
-                self.explorer_publisher.publish(0)
+                if time.time - self.timeBallSeen < self.maxTimeSinceBallSeen:
+                        twist_msg.angular.z = self.search_turn_speed  # Rotate to search
+                else:
+                        self.explorer_publisher.publish(0) #random explorer
         return twist_msg
 
     def calculate_horizontal_angle(self, x_center, frame_width, max_angle):
