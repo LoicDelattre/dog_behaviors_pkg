@@ -26,7 +26,7 @@ def movement_callback(msg):
                 Explorer.publisher.publish(twist)  # Publish the Twist message
                 
                 # Use a timer to delay the next movement without blocking
-                rospy.Timer(rospy.Duration(5), lambda event: None, oneshot=True)
+                rospy.sleep(5)
 
 class Explorer:
         publisher = None
