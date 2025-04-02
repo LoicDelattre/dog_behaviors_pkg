@@ -7,9 +7,26 @@ def movement_callback(msg):
         if msg.data == 0:  # Check if the received message is 0
                 rospy.loginfo("Exploring...")
                 twist = Twist()
-                twist.linear.x = random.uniform(0.1, 0.5)  # Random linear velocity
-                twist.angular.z = random.uniform(-1.0, 1.0)  # Random angular velocity
+                # Randomly decide the direction of movement
+                direction = random.choice(["forward", "backward", "left", "right"])
+                
+                if direction == "forward":
+                        twist.linear.x = 0.5  # Move forward
+                        twist.angular.z = 0.0
+                elif direction == "backward":
+                        twist.linear.x = -0.5  # Move backward
+                        twist.angular.z = 0.0
+                elif direction == "left":
+                        twist.linear.x = 0.0
+                        twist.angular.z = 1.0  # Turn left
+                elif direction == "right":
+                        twist.linear.x = 0.0
+                        twist.angular.z = -1.0  # Turn right
+                
                 Explorer.publisher.publish(twist)  # Publish the Twist message
+                
+                # Use a timer to delay the next movement without blocking
+                rospy.Timer(rospy.Duration(5), lambda event: None, oneshot=True)
 
 class Explorer:
         publisher = None
