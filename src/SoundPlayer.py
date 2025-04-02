@@ -5,15 +5,18 @@ from std_msgs.msg import String
 
 soundhandle = SoundClient(sound_action="/robotsound")
 path_follow = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/animals.wav'
-path_search = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/sniff.wav'
+path_search = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/searching.wav'
+buffer_msg = ""
 
 def sound_callback(msg):
+        if buffer_msg != msg:
+                soundhandle.stopAll()
         print(msg.data)
         if msg.data == "SKIBIDI FORWARD":
                 soundhandle.playWave(path_follow)  
                 print("AHOOOOOOOOOOOOOO")
-        if msg.data == "SEARCHING":
-                soundhandle.playWave(path)  
+        elif msg.data == "SEARCHING":
+                soundhandle.playWave(path_search)  
                 print("WHERE IS IT")
         pass
 
