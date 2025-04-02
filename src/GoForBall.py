@@ -2,6 +2,7 @@ import rospy
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
+from std_msgs.msg import Int32
 import cv2
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
@@ -25,6 +26,9 @@ class TurtlebotVisionController:
 
         #Publisher for sound effects
         self.sound_publisher = rospy.Publisher("/sound_type", String, queue_size=10)
+
+	#Publisher for 
+	self.explorer_publisher = rospy.Publisher("/ball_status", Int32, queue_size=10)
 
         # Define movement speed
         self.forward_speed = 0.4
@@ -101,6 +105,7 @@ class TurtlebotVisionController:
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if contours:
+            self.explorer_publisher.publish(1)
             # Find the largest red object
             largest_contour = max(contours, key=cv2.contourArea)
             area = cv2.contourArea(largest_contour)
@@ -139,8 +144,7 @@ class TurtlebotVisionController:
                 twist_msg.linear.x = self.forward_speed
                 twist_msg.angular.z = self.search_turn_speed  # Rotate to search
         else:
-            twist_msg.linear.x = 0.0
-            twist_msg.angular.z = self.search_turn_speed  # Rotate to search
+                self.explorer_publisher.publish(0)
         return twist_msg
 
     def calculate_horizontal_angle(self, x_center, frame_width, max_angle):
