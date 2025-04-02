@@ -2,13 +2,27 @@ import rospy
 import random
 from std_msgs.msg import Int32
 from geometry_msgs.msg import Twist
+import time
+
+exploringTime = 5.0
+timeStartExplore = 0.0
+directionDecidedFlag = False
+
+def decide_direction():
+	direction = random.choice(["forward", "backward", "left", "right"])
+	return direction
 
 def movement_callback(msg):
         if msg.data == 0:  # Check if the received message is 0
                 rospy.loginfo("Exploring...")
                 twist = Twist()
-                # Randomly decide the direction of movement
-                direction = random.choice(["forward", "backward", "left", "right"])
+                if not directionDecidedFlag:
+                        direction  = decide_direction()
+                        directionDecidedFlag = True
+                        timeStartExplore = time.time()
+
+                if time.time() - timeStartExplore > exploringTime:
+                        directionDecidedFlag = False
                 
                 if direction == "forward":
                         twist.linear.x = 0.5  # Move forward
@@ -24,14 +38,12 @@ def movement_callback(msg):
                         twist.angular.z = -1.0  # Turn right
                 
                 Explorer.publisher.publish(twist)  # Publish the Twist message
-                
-                # Use a timer to delay the next movement without blocking
-                rospy.sleep(5)
 
 class Explorer:
         publisher = None
 
 def main():
+        print("Captain Teemo au rapport (l'explorer tsais)")
         rospy.init_node('explorer', anonymous=True)
 
         # Create a publisher for /cmd_vel

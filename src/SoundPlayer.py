@@ -1,5 +1,6 @@
 import rospy
 from sound_play.libsoundplay import SoundClient
+from std_srvs.srv import Empty
 from std_msgs.msg import String
 import time
 from pydub.utils import mediainfo
@@ -11,8 +12,8 @@ path_follow = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/animals.wav'
 path_search = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/searching.wav'
 buffer_msg = ""
 
-goingForBallFlag = false
-searchingFlag = false
+goingForBallFlag = False
+searchingFlag = False
 
 soundStartTime = 0.0
 currentFileDuration = 0.0
@@ -31,8 +32,8 @@ def sound_callback(msg):
 
         if msg.data == "SKIBIDI FORWARD" and not goingForBallFlag:
                 stop_sound()
-                goingForBallFlag = true
-                searchingFlag = false
+                goingForBallFlag = True
+                searchingFlag = False
                 soundStartTime = time.time()
                 currentFileDuration = get_sound_duration(path_follow)
                 soundhandle.playWave(path_follow)  
@@ -40,8 +41,8 @@ def sound_callback(msg):
 
         elif msg.data == "SEARCHING" and not searchingFlag:
                 stop_sound()
-                searchingFlag = true
-                goingForBallFlag = false
+                searchingFlag = True
+                goingForBallFlag = False
                 soundStartTime = time.time()
                 currentFileDuration = get_sound_duration(path_search)
                 soundhandle.playWave(path_search)  

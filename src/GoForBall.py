@@ -27,8 +27,8 @@ class TurtlebotVisionController:
         #Publisher for sound effects
         self.sound_publisher = rospy.Publisher("/sound_type", String, queue_size=10)
 
-	#Publisher for 
-	self.explorer_publisher = rospy.Publisher("/ball_status", Int32, queue_size=10)
+        #Publisher for explorer
+        self.explorer_publisher = rospy.Publisher("/ball_status", Int32, queue_size=10)
 
         # Define movement speed
         self.forward_speed = 0.4
@@ -148,7 +148,7 @@ class TurtlebotVisionController:
                 twist_msg.linear.x = self.forward_speed
                 twist_msg.angular.z = self.search_turn_speed  # Rotate to search
         else:
-                if time.time - self.timeBallSeen < self.maxTimeSinceBallSeen:
+                if time.time() - self.timeBallSeen < self.maxTimeSinceBallSeen:
                         twist_msg.angular.z = self.search_turn_speed  # Rotate to search
                 else:
                         self.explorer_publisher.publish(0) #random explorer
