@@ -22,8 +22,9 @@ class Explorer():
 		if msg.data == 0:  # Check if the received message is 0
 			rospy.loginfo("Exploring...")
 			twist = Twist()
+			direction = ""
 			if not self.directionDecidedFlag:
-				direction  = decide_direction()
+				direction  = self.decide_direction()
 				self.directionDecidedFlag = True
 				self.timeStartExplore = time.time()
 
