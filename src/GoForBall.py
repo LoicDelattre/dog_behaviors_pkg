@@ -54,6 +54,10 @@ class TurtlebotVisionController:
         self.maxTimeSinceBallSeen = 8.0
         self.timeBallSeen = 0.0
 
+    def obstacle_callback(self, msg):
+         self.obstacle_detected = msg
+        pass
+
     def computeFPS(self):
         current_time = time.time()
 
