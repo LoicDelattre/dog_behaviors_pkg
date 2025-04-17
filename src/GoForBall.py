@@ -51,7 +51,7 @@ class TurtlebotVisionController:
         self.firstImageFlag = False
         self.not_going_to_ball = True
 
-        self.maxTimeSinceBallSeen = 8.0
+        self.maxTimeSinceBallSeen = 5.0
         self.timeBallSeen = 0.0
 
     def obstacle_callback(self, msg):
