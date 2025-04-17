@@ -2,6 +2,8 @@ import rospy
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int32
+from std_msgs.msg import Bool
+from std_msgs.msg import Int32
 
 class ObstacleDetection:
 
@@ -10,6 +12,7 @@ class ObstacleDetection:
 
         self.obstacle_status_pub = rospy.Publisher("/obstacle_status", Bool, queue_size=10)
         self.subscriber_scan = rospy.Subscriber('/scan', LaserScan, self.scan_callback)
+        self.publisher = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
 
         self.obstacle_distance_threshold = 0.25  # meters
         self.obstacle_detected = False
@@ -27,7 +30,7 @@ class ObstacleDetection:
         if front_ranges:
             min_distance = min(front_ranges)
             is_obstacle = min_distance < self.obstacle_distance_threshold
-
+            twist_msg = Twist()
             if is_obstacle != self.obstacle_detected:
                 self.obstacle_detected = is_obstacle
                 self.obstacle_status_pub.publish(Bool(data=is_obstacle))
@@ -35,6 +38,7 @@ class ObstacleDetection:
                         rospy.logwarn("Obstacle detected at %.2f meters!", min_distance)
                         twist_msg.linear.x = 0.0
                         twist_msg.angular.z = 0.5
+                        self.publisher.publish(twist_msg)
                 else:
                         rospy.loginfo("Obstacle cleared.")
         else:

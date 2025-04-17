@@ -82,7 +82,6 @@ class TurtlebotVisionController:
                     self.publisher.publish(movement_cmd)
                 else:
                     # Obstacle → stop the robot
-                    rospy.loginfo("Obstacle detected — stopping TurtleBot.")
                     stop_cmd = Twist()
                     self.publisher.publish(stop_cmd)
             else:
