@@ -129,7 +129,7 @@ class TurtlebotVisionController:
                 angle_to_ball = self.calculate_horizontal_angle(center_x, frame_width, self.maxAngle)
                 self.search_turn_speed = -self.computeTurnSpeed(angle_to_ball) #adjust turn speed to follow ball
                 if abs(center_x - img_center_x) < 100:
-                    twist_msg.linear.x = self.forward_speed  # Move forward
+                    twist_msg.linear.x = 0 # Move forward
                     twist_msg.angular.z = 0.0
                     
                     rospy.loginfo(f"Item area = {area}")
@@ -139,20 +139,22 @@ class TurtlebotVisionController:
                     self.image_publisher.publish(image)
                     self.sound_publisher.publish("SKIBIDI FORWARD")
                 elif center_x < img_center_x:
-                    twist_msg.linear.x = self.forward_speed
-                    twist_msg.angular.z = self.search_turn_speed # Turn left
+                    twist_msg.linear.x = 0
+                    twist_msg.angular.z = 0 # Turn left
                 else:
-                    twist_msg.linear.x = self.forward_speed
-                    twist_msg.angular.z = self.search_turn_speed  # Turn right
+                    twist_msg.linear.x = 0
+                    twist_msg.angular.z = 0  # Turn right
             else:
-                twist_msg.linear.x = self.forward_speed
-                twist_msg.angular.z = self.search_turn_speed  # Rotate to search
+                twist_msg.linear.x = 0
+                twist_msg.angular.z = 0 # Rotate to search
         else:
                 self.sound_publisher.publish("SEARCHING")
                 if time.time() - self.timeBallSeen < self.maxTimeSinceBallSeen:
-                        twist_msg.angular.z = self.search_turn_speed  # Rotate to search
+                        #twist_msg.angular.z = self.search_turn_speed  # Rotate to search
+                        twist_msg.angular.z = 0
+                        print("i still remember...")
                 else:
-                        self.explorer_publisher.publish(0) #random explorer
+                        print("exploring")
         return twist_msg
 
     def calculate_horizontal_angle(self, x_center, frame_width, max_angle):

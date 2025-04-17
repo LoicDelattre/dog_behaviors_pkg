@@ -5,61 +5,61 @@ from std_msgs.msg import String
 import time
 from pydub.utils import mediainfo
 
-stop_sound = rospy.ServiceProxy('/sound_play/stopAll', Empty)
 
-soundhandle = SoundClient(sound_action="/robotsound")
-path_follow = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/animals.wav'
-path_search = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/searching.wav'
-buffer_msg = ""
+class SoundPlayer():
+	def __init__(self):
+		self.stop_sound = rospy.ServiceProxy('/sound_play/stopAll', Empty)
 
-goingForBallFlag = False
-searchingFlag = False
+		self.soundhandle = SoundClient(sound_action="/robotsound")
+		self.path_follow = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/animals.wav'
+		self.path_search = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/searching.wav'
+		self.buffer_msg = ""
 
-soundStartTime = 0.0
-currentFileDuration = 0.0
+		self.soundPlaying = False
 
-def get_sound_duration(file_path):
-        info = mediainfo(file_path)
-        return float(info['duration'])
+		self.soundStartTime = 0.0
+		self.currentFileDuration = 0.0
+		pass
+	def get_sound_duration(self, file_path):
+		info = mediainfo(file_path)
+		return float(info['duration'])
 
-def sound_callback(msg):
-        if buffer_msg != msg:
-                soundhandle.stopAll()
-        print(msg.data)
+	def sound_callback(self, msg):
+		print(msg)
 
-        if time.time() - soundStartTime > currentFileDuration:
-                print("sound done")
+		if time.time() - self.soundStartTime > self.currentFileDuration:
+			self.soundPlaying = False
+			print("sound done")
 
-        if msg.data == "SKIBIDI FORWARD" and not goingForBallFlag:
-                stop_sound()
-                goingForBallFlag = True
-                searchingFlag = False
-                soundStartTime = time.time()
-                currentFileDuration = get_sound_duration(path_follow)
-                soundhandle.playWave(path_follow)  
-                print("AHOOOOOOOOOOOOOO")
+		if msg.data == "SKIBIDI FORWARD" and not self.soundPlaying:
+			#self.stop_sound()
+			print("AHOOOOOOOOOOOOOO")
+			self.soundPlaying = True
+			self.soundStartTime = time.time()
+			self.soundhandle.playWave(self.path_follow)
+			self.currentFileDuration = self.get_sound_duration(self.path_follow)
 
-        elif msg.data == "SEARCHING" and not searchingFlag:
-                stop_sound()
-                searchingFlag = True
-                goingForBallFlag = False
-                soundStartTime = time.time()
-                currentFileDuration = get_sound_duration(path_search)
-                soundhandle.playWave(path_search)  
-                print("WHERE IS IT")
+		elif msg.data == "SEARCHING" and not self.soundPlaying:
+			#self.stop_sound()
+			print("WHERE IS IT")
+			self.soundPlaying = True
+			self.soundStartTime = time.time()
+			self.soundhandle.playWave(self.path_search)  
+			self.currentFileDuration = self.get_sound_duration(self.path_search)
 
-        pass
+		pass
 
-def main():
-    rospy.init_node('sound_player', anonymous=True)
+	def main(self):
+		print("sound player launched")
+		rospy.init_node('sound_player', anonymous=True)
 
-    # Create a publisher (does not send data yet)
-    pub = rospy.Publisher("/sound_type", String, queue_size=10)
+		# Create a publisher (does not send data yet)
+		pub = rospy.Publisher("/sound_type", String, queue_size=10)
 
-    sub = rospy.Subscriber("/sound_type", String, sound_callback)
-    
-    rospy.spin()
-    
+		sub = rospy.Subscriber("/sound_type", String, self.sound_callback) 
+		rospy.spin()
+
 
 if __name__ == '__main__':
-    main()
+    sd = SoundPlayer()
+    sd.main()
