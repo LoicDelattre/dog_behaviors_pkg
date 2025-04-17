@@ -55,7 +55,7 @@ class TurtlebotVisionController:
         self.timeBallSeen = 0.0
 
     def obstacle_callback(self, msg):
-         self.obstacle_detected = msg
+        self.obstacle_detected = msg
         pass
 
     def computeFPS(self):
@@ -133,11 +133,6 @@ class TurtlebotVisionController:
             img_center_x = cv_image.shape[1] // 2  # Center of the image
 
             # Define movement logic based on object position
-            if self.flag:
-                self.flag = False
-                self.sound_publisher.publish("SEARCHING")
-                rospy.sleep(0.5)
-                print("searching")
             if area > self.sizeThreshold:  # Ignore small objects (filter out noise)
                 angle_to_ball = self.calculate_horizontal_angle(center_x, frame_width, self.maxAngle)
                 self.search_turn_speed = -self.computeTurnSpeed(angle_to_ball) #adjust turn speed to follow ball
@@ -145,8 +140,8 @@ class TurtlebotVisionController:
                     twist_msg.linear.x = self.forward_speed  # Move forward
                     twist_msg.angular.z = 0.0
                     
-                    rospy.loginfo(f"Item area = {area}")
-                    rospy.loginfo("Red object detected! Skibidiing toward it.")
+                    #rospy.loginfo(f"Item area = {area}")
+                    #rospy.loginfo("Red object detected! Skibidiing toward it.")
                     #self.going_to_ball = True
 
                     self.image_publisher.publish(image)
@@ -161,6 +156,7 @@ class TurtlebotVisionController:
                 twist_msg.linear.x = self.forward_speed
                 twist_msg.angular.z = self.search_turn_speed  # Rotate to search
         else:
+                self.sound_publisher.publish("SEARCHING")
                 if time.time() - self.timeBallSeen < self.maxTimeSinceBallSeen:
                         twist_msg.angular.z = self.search_turn_speed  # Rotate to search
                 else:
