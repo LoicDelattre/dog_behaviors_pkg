@@ -3,6 +3,7 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 from std_msgs.msg import Int32
+from std_msgs.msg import Bool
 import cv2
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
@@ -29,6 +30,10 @@ class TurtlebotVisionController:
 
         #Publisher for explorer
         self.explorer_publisher = rospy.Publisher("/ball_status", Int32, queue_size=10)
+        
+        rospy.Subscriber("/obstacle_status", Bool, self.obstacle_callback)
+        
+        self.obstacle_detected = False
 
         # Define movement speed
         self.forward_speed = 0.4
@@ -65,22 +70,26 @@ class TurtlebotVisionController:
         """
         self.computeFPS()
         try:
-                if self.firstImageFlag:
-                        # Process the image to detect red color
-                        movement_cmd = self.process_image(msg)
-                        self.buffer_movement_cmd = movement_cmd
-
-                        # Publish movement command
-                        self.publisher.publish(movement_cmd)
+            if self.firstImageFlag:
+                if not self.obstacle_detected:
+                    # No obstacle → normal movement
+                    movement_cmd = self.process_image(msg)
+                    self.buffer_movement_cmd = movement_cmd
+                    self.publisher.publish(movement_cmd)
                 else:
-                        msg = Twist()
-                        msg.linear.x = 0.01
-                        self.publisher.publish(msg)
-                        self.firstImageFlag = True
+                    # Obstacle → stop the robot
+                    rospy.loginfo("Obstacle detected — stopping TurtleBot.")
+                    stop_cmd = Twist()
+                    self.publisher.publish(stop_cmd)
+            else:
+                # On first image, give a small nudge
+                msg = Twist()
+                msg.linear.x = 0.01
+                self.publisher.publish(msg)
+                self.firstImageFlag = True
 
         except CvBridgeError as e:
             rospy.logerr("CvBridge Error: {}".format(e))
-
     def process_image(self, image):
         """
         Detect red color in the image and determine movement.
