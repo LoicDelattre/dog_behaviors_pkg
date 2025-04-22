@@ -1,4 +1,4 @@
-onimport rospy
+import rospy
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
@@ -45,11 +45,13 @@ class TurtlebotVisionController:
         self.maxAngle = 45
         self.search_turn_speed = 0.9
 
-        self.sizeThreshold = 190
+        self.sizeThreshold = 300
 
-        self.exploringFlagFlag = False
+        self.exploringFlag = False
         self.searchingFlag = False
         self.goingForBallFlag = False
+
+        self.ballSeen = False
 
         self.delta = 0
         self.last_time = None
@@ -85,11 +87,9 @@ class TurtlebotVisionController:
                     # No obstacle → normal movement
                     movement_cmd = self.process_image(msg)
                     self.buffer_movement_cmd = movement_cmd
-                    self.publisher.publish(movement_cmd)
-                else:
-                    # Obstacle → stop the robot
-                    stop_cmd = Twist()
-                    self.publisher.publish(stop_cmd)
+
+                    if not self.exploringFlag:
+                            self.publisher.publish(movement_cmd)
             else:
                 # On first image, give a small nudge
                 msg = Twist()
@@ -138,22 +138,26 @@ class TurtlebotVisionController:
             img_center_x = cv_image.shape[1] // 2  # Center of the image
 
             # Define movement logic based on object position
+            self.image_publisher.publish(image)
             if area > self.sizeThreshold:  # Ignore small objects (filter out noise)
                 angle_to_ball = self.calculate_horizontal_angle(center_x, frame_width, self.maxAngle)
                 self.search_turn_speed = -self.computeTurnSpeed(angle_to_ball) #adjust turn speed to follow ball
+                self.ballSeen = True
+                self.explorer_publisher.publish(1)
+
                 if abs(center_x - img_center_x) < 80:
                     twist_msg.linear.x = self.forward_speed  # Move forward
                     twist_msg.angular.z = 0.0
                     
-                    if not self.goingForBallFlag and self.mode == "DEBUG":
-                        rospy.loginfo(f"Item area = {area}")
-                        rospy.loginfo("Red object detected! Skibidiing toward it.")
+                    if not self.goingForBallFlag:
+                        if self.mode == "DEBUG":
+                                rospy.loginfo(f"Item area = {area}")
+                                rospy.loginfo("Red object detected! Skibidiing toward it.")
                         self.searchingFlag = False
                         self.exploringFlag = False
 
                     self.goingForBallFlag= True
 
-                    self.image_publisher.publish(image)
                     self.sound_publisher.publish("SKIBIDI FORWARD")
                 elif center_x < img_center_x:
                     twist_msg.linear.x = self.forward_speed
@@ -161,22 +165,7 @@ class TurtlebotVisionController:
                 else:
                     twist_msg.linear.x = self.forward_speed
                     twist_msg.angular.z = self.search_turn_speed  # Turn right
-            else:
-                    twist_msg.linear.x = self.forward_speed
-                    twist_msg.angular.z = self.search_turn_speed  # Rotate to search
-                    if not self.searchingFlag and mode == "DEBUG":
-                            self.goingForBallFlag = False
-                            self.exploringFalg = False
-                            rospy.loginfo("SEARCHING")
- 
-                self.searchingFlag = True
         else:
-                if not self.exploringFlag and mode == "DEBUG":
-                    self.goingForBallFlag = False
-                    self.searchingFlag = False
-                    rospy.loginfo("MESSAGE TO EXPLORER")
- 
-                self.exploringFlag = True
                 twist_msg = self.searching(twist_msg)
         if self.mode == "DEBUG-0MOV":
             return Twist()
@@ -185,10 +174,26 @@ class TurtlebotVisionController:
 
     def searching(self, twist_msg):
             self.sound_publisher.publish("SEARCHING")
-            if time.time() - self.timeBallSeen < self.maxTimeSinceBallSeen:
-                   twist_msg.angular.z = self.search_turn_speed  # Rotate to search
+            if time.time() - self.timeBallSeen < self.maxTimeSinceBallSeen and self.ballSeen:
+                    twist_msg.angular.z = self.search_turn_speed  # Rotate to search
+                    #twist_msg.linear.x = self.forward_speed
+                    if not self.searchingFlag:
+                        self.goingForBallFlag = False
+                        self.exploringFalg = False 
+                        if self.mode == "DEBUG":
+                                rospy.loginfo("SEARCHING")
+
+                    self.searchingFlag = True
+
             else:
-                    self.explorer_publisher.publish(0) #random explorer
+                if not self.exploringFlag:
+                    self.goingForBallFlag = False
+                    self.searchingFlag = False
+                    if self.mode == "DEBUG":
+                            rospy.loginfo("MESSAGE TO EXPLORER")
+ 
+                self.exploringFlag = True
+                self.explorer_publisher.publish(0) #random explorer
             return twist_msg
 
     def calculate_horizontal_angle(self, x_center, frame_width, max_angle):
