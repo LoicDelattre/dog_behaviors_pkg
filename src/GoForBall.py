@@ -41,10 +41,10 @@ class TurtlebotVisionController:
         self.maxAngle = 45
         self.search_turn_speed = 0.9
 
-        self.going_to_ball = False
-
         self.sizeThreshold = 190
-        self.flag = True
+
+        self.searchingFlag = False
+        self.goingForBallFlag = False
 
         self.delta = 0
         self.last_time = None
@@ -53,6 +53,8 @@ class TurtlebotVisionController:
 
         self.maxTimeSinceBallSeen = 5.0
         self.timeBallSeen = 0.0
+
+        print("Go For Ball Node Launched")
 
     def obstacle_callback(self, msg):
         self.obstacle_detected = msg
@@ -139,9 +141,12 @@ class TurtlebotVisionController:
                     twist_msg.linear.x = self.forward_speed  # Move forward
                     twist_msg.angular.z = 0.0
                     
-                    #rospy.loginfo(f"Item area = {area}")
-                    #rospy.loginfo("Red object detected! Skibidiing toward it.")
-                    #self.going_to_ball = True
+                    if not self.goingForBallFlag:
+                        rospy.loginfo(f"Item area = {area}")
+                        rospy.loginfo("Red object detected! Skibidiing toward it.")
+                        self.searchingFlag = False
+
+                    self.goingForBallFlag= True
 
                     self.image_publisher.publish(image)
                     self.sound_publisher.publish("SKIBIDI FORWARD")
@@ -152,15 +157,24 @@ class TurtlebotVisionController:
                     twist_msg.linear.x = self.forward_speed
                     twist_msg.angular.z = self.search_turn_speed  # Turn right
             else:
-                twist_msg.linear.x = self.forward_speed
-                twist_msg.angular.z = self.search_turn_speed  # Rotate to search
+                    twist_msg.linear.x = self.forward_speed
+                    twist_msg.angular.z = self.search_turn_speed  # Rotate to search
         else:
-                self.sound_publisher.publish("SEARCHING")
-                if time.time() - self.timeBallSeen < self.maxTimeSinceBallSeen:
-                        twist_msg.angular.z = self.search_turn_speed  # Rotate to search
-                else:
-                        self.explorer_publisher.publish(0) #random explorer
+                if not self.searchingFlag:
+                    self.goingForBallFlag = True
+                    rospy.loginfo("START SEARCHING")
+ 
+                self.searchingFlag = True
+                twist_msg = self.searching(twist_msg)
         return twist_msg
+
+    def searching(self, twist_msg):
+            self.sound_publisher.publish("SEARCHING")
+            if time.time() - self.timeBallSeen < self.maxTimeSinceBallSeen:
+                   twist_msg.angular.z = self.search_turn_speed  # Rotate to search
+            else:
+                    self.explorer_publisher.publish(0) #random explorer
+            return twist_msg
 
     def calculate_horizontal_angle(self, x_center, frame_width, max_angle):
             """

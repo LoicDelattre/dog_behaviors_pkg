@@ -9,6 +9,7 @@ class Explorer():
 		self.exploringTime = 5.0
 		self.timeStartExplore = 0.0
 		self.directionDecidedFlag = False
+		self.direction = "forward"
 
 		# Create a publisher for /cmd_vel
 		self.publisher = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
@@ -20,17 +21,17 @@ class Explorer():
 
 	def movement_callback(self, msg):
 		if msg.data == 0:  # Check if the received message is 0
-			rospy.loginfo("Exploring...")
 			twist = Twist()
 			direction = ""
 			if not self.directionDecidedFlag:
-				direction  = self.decide_direction()
+				self.direction  = self.decide_direction()
 				self.directionDecidedFlag = True
 				self.timeStartExplore = time.time()
 
 			if time.time() - self.timeStartExplore > self.exploringTime:
 				self.directionDecidedFlag = False
 			
+			rospy.loginfo(f"Exploring {self.direction}")
 			if direction == "forward":
 				twist.linear.x = 0.5  # Move forward
 				twist.angular.z = 0.0

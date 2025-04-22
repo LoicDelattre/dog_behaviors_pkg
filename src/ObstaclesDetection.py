@@ -19,7 +19,7 @@ class ObstacleDetection:
 
     def scan_callback(self, scan_msg):
         scan_range = scan_msg.ranges
-        angle_range = 20
+        angle_range = 35
 
         center_index = len(scan_range) // 2
         start_index = max(center_index - angle_range, 0)
@@ -33,14 +33,12 @@ class ObstacleDetection:
             twist_msg = Twist()
             if is_obstacle != self.obstacle_detected:
                 self.obstacle_detected = is_obstacle
-                self.obstacle_status_pub.publish(Bool(data=is_obstacle))
-                if is_obstacle:
-                        rospy.logwarn("Obstacle detected at %.2f meters!", min_distance)
-                        twist_msg.linear.x = 0.0
-                        twist_msg.angular.z = 0.5
-                        self.publisher.publish(twist_msg)
-                else:
-                        rospy.loginfo("Obstacle cleared.")
+            if is_obstacle:
+                    self.obstacle_status_pub.publish(Bool(data=is_obstacle))
+                    rospy.logwarn("Obstacle detected at %.2f meters!", min_distance)
+                    twist_msg.linear.x = 0.0
+                    twist_msg.angular.z = 0.5
+                    self.publisher.publish(twist_msg)
         else:
             rospy.loginfo("No valid LiDAR data in front range.")
             self.obstacle_detected = False
