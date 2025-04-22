@@ -31,3 +31,6 @@ $python3 Explorer.py
 
 **For going for Ball**
 $python3 GoForBall.py
+
+TO INCERASE VOLUME
+amixer sset 'Headphone' 80%

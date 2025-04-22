@@ -36,6 +36,7 @@ class TurtlebotVisionController:
         self.explorer_publisher = rospy.Publisher("/ball_status", Int32, queue_size=10)
         
         rospy.Subscriber("/obstacle_status", Bool, self.obstacle_callback)
+
         
         self.obstacle_detected = False
 

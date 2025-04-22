@@ -12,7 +12,7 @@ class SoundPlayer():
 
 		self.soundhandle = SoundClient(sound_action="/robotsound")
 		self.path_follow = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/animals.wav'
-		self.path_search = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/searching.wav'
+		self.path_search = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/searching3.wav'
 		self.buffer_msg = ""
 
 		self.soundPlaying = False
