@@ -1,4 +1,4 @@
-import rospy
+onimport rospy
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
@@ -8,10 +8,14 @@ import cv2
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 import time
+import argparse
 
 class TurtlebotVisionController:
-    def __init__(self):
+    def __init__(self, mode):
         rospy.init_node("turtlebot_vision_controller", anonymous=True)
+
+        self.mode = mode
+        print(self.mode)
 
         # Initialize CvBridge
         self.bridge = CvBridge()
@@ -43,13 +47,13 @@ class TurtlebotVisionController:
 
         self.sizeThreshold = 190
 
+        self.exploringFlagFlag = False
         self.searchingFlag = False
         self.goingForBallFlag = False
 
         self.delta = 0
         self.last_time = None
         self.firstImageFlag = False
-        self.not_going_to_ball = True
 
         self.maxTimeSinceBallSeen = 5.0
         self.timeBallSeen = 0.0
@@ -137,14 +141,15 @@ class TurtlebotVisionController:
             if area > self.sizeThreshold:  # Ignore small objects (filter out noise)
                 angle_to_ball = self.calculate_horizontal_angle(center_x, frame_width, self.maxAngle)
                 self.search_turn_speed = -self.computeTurnSpeed(angle_to_ball) #adjust turn speed to follow ball
-                if abs(center_x - img_center_x) < 100:
+                if abs(center_x - img_center_x) < 80:
                     twist_msg.linear.x = self.forward_speed  # Move forward
                     twist_msg.angular.z = 0.0
                     
-                    if not self.goingForBallFlag:
+                    if not self.goingForBallFlag and self.mode == "DEBUG":
                         rospy.loginfo(f"Item area = {area}")
                         rospy.loginfo("Red object detected! Skibidiing toward it.")
                         self.searchingFlag = False
+                        self.exploringFlag = False
 
                     self.goingForBallFlag= True
 
@@ -159,14 +164,24 @@ class TurtlebotVisionController:
             else:
                     twist_msg.linear.x = self.forward_speed
                     twist_msg.angular.z = self.search_turn_speed  # Rotate to search
-        else:
-                if not self.searchingFlag:
-                    self.goingForBallFlag = True
-                    rospy.loginfo("START SEARCHING")
+                    if not self.searchingFlag and mode == "DEBUG":
+                            self.goingForBallFlag = False
+                            self.exploringFalg = False
+                            rospy.loginfo("SEARCHING")
  
                 self.searchingFlag = True
+        else:
+                if not self.exploringFlag and mode == "DEBUG":
+                    self.goingForBallFlag = False
+                    self.searchingFlag = False
+                    rospy.loginfo("MESSAGE TO EXPLORER")
+ 
+                self.exploringFlag = True
                 twist_msg = self.searching(twist_msg)
-        return twist_msg
+        if self.mode == "DEBUG-0MOV":
+            return Twist()
+        else:
+            return twist_msg
 
     def searching(self, twist_msg):
             self.sound_publisher.publish("SEARCHING")
@@ -203,7 +218,10 @@ class TurtlebotVisionController:
 
 if __name__ == "__main__":
     try:
-        controller = TurtlebotVisionController()
+        myParser = argparse.ArgumentParser()
+        myParser.add_argument("-m", help='message to be sent', type=str)
+        args = (myParser.parse_args())
+        controller = TurtlebotVisionController(args.m)
         controller.run()
     except rospy.ROSInterruptException:
         pass
