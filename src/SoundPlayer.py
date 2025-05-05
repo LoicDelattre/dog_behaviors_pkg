@@ -12,10 +12,12 @@ class SoundPlayer():
 
 		self.soundhandle = SoundClient(sound_action="/robotsound")
 		self.path_follow = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/animals.wav'
-		self.path_search = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/searching3.wav'
+		self.path_search = '/home/ubuntu/catkin_ws/src/dog_behaviors_pkg/sounds/searching_loud.wav'
 		self.buffer_msg = ""
 
 		self.soundPlaying = False
+		self.searchingFlag = False
+		self.chasingFlag = False
 
 		self.soundStartTime = 0.0
 		self.currentFileDuration = 0.0
@@ -25,27 +27,37 @@ class SoundPlayer():
 		return float(info['duration'])
 
 	def sound_callback(self, msg):
-		print(msg)
 
 		if time.time() - self.soundStartTime > self.currentFileDuration:
 			self.soundPlaying = False
 			print("sound done")
 
-		if msg.data == "SKIBIDI FORWARD" and not self.soundPlaying:
-			#self.stop_sound()
-			print("AHOOOOOOOOOOOOOO")
-			self.soundPlaying = True
-			self.soundStartTime = time.time()
-			self.soundhandle.playWave(self.path_follow)
-			self.currentFileDuration = self.get_sound_duration(self.path_follow)
+		if msg.data == "SKIBIDI FORWARD":
+			if not self.soundPlaying:
+				print("AHOOOOOOOOOOOOOO")
+				self.soundPlaying = True
+				self.soundStartTime = time.time()
+				self.soundhandle.playWave(self.path_follow)
+				self.currentFileDuration = self.get_sound_duration(self.path_follow)
+				self.chasingFlag = True
+			elif self.searchingFlag:
+				self.searchingFlag = False
+				self.soundhandle.stopAll()
+				print("AHOOOOOOOOOOOOOO")
+				self.soundPlaying = True
+				self.soundStartTime = time.time()
+				self.soundhandle.playWave(self.path_follow)
+				self.currentFileDuration = self.get_sound_duration(self.path_follow)
+				self.chasingFlag = True
 
-		elif msg.data == "SEARCHING" and not self.soundPlaying:
-			#self.stop_sound()
-			print("WHERE IS IT")
-			self.soundPlaying = True
-			self.soundStartTime = time.time()
-			self.soundhandle.playWave(self.path_search)  
-			self.currentFileDuration = self.get_sound_duration(self.path_search)
+		elif msg.data == "SEARCHING" :
+			if not self.soundPlaying:
+				print("WHERE IS IT")
+				self.soundPlaying = True
+				self.searchingFlag = True
+				self.soundStartTime = time.time()
+				self.soundhandle.playWave(self.path_search)  
+				self.currentFileDuration = self.get_sound_duration(self.path_search)
 
 		pass
 

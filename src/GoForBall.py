@@ -84,13 +84,12 @@ class TurtlebotVisionController:
         self.computeFPS()
         try:
             if self.firstImageFlag:
-                if not self.obstacle_detected:
-                    # No obstacle → normal movement
-                    movement_cmd = self.process_image(msg)
-                    self.buffer_movement_cmd = movement_cmd
+                # No obstacle → normal movement
+                movement_cmd = self.process_image(msg)
+                self.buffer_movement_cmd = movement_cmd
 
-                    if not self.exploringFlag:
-                            self.publisher.publish(movement_cmd)
+                if not self.exploringFlag:
+                         self.publisher.publish(movement_cmd)
             else:
                 # On first image, give a small nudge
                 msg = Twist()
@@ -127,45 +126,45 @@ class TurtlebotVisionController:
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if contours:
-            self.timeBallSeen = time.time()
-            self.explorer_publisher.publish(1)
-            # Find the largest red object
-            largest_contour = max(contours, key=cv2.contourArea)
-            area = cv2.contourArea(largest_contour)
-
-            # Get bounding box around the red object
-            x, y, w, h = cv2.boundingRect(largest_contour)
-            center_x = x + w // 2  # Find center of red object
-            img_center_x = cv_image.shape[1] // 2  # Center of the image
-
-            # Define movement logic based on object position
-            self.image_publisher.publish(image)
-            if area > self.sizeThreshold:  # Ignore small objects (filter out noise)
-                angle_to_ball = self.calculate_horizontal_angle(center_x, frame_width, self.maxAngle)
-                self.search_turn_speed = -self.computeTurnSpeed(angle_to_ball) #adjust turn speed to follow ball
-                self.ballSeen = True
+                self.timeBallSeen = time.time()
                 self.explorer_publisher.publish(1)
+                # Find the largest red object
+                largest_contour = max(contours, key=cv2.contourArea)
+                area = cv2.contourArea(largest_contour)
 
-                if abs(center_x - img_center_x) < 80:
-                    twist_msg.linear.x = self.forward_speed  # Move forward
-                    twist_msg.angular.z = 0.0
+                #  Get bounding box around the red object
+                x, y, w, h = cv2.boundingRect(largest_contour)
+                center_x = x + w // 2  # Find center of red object
+                img_center_x = cv_image.shape[1] // 2  # Center of the image
+
+                # Define movement logic based on object position
+                self.image_publisher.publish(image)
+                if area > self.sizeThreshold:  # Ignore small objects (filter out noise)
+                        angle_to_ball = self.calculate_horizontal_angle(center_x, frame_width, self.maxAngle)
+                        self.search_turn_speed = -self.computeTurnSpeed(angle_to_ball) #adjust turn speed to follow ball
+                        self.ballSeen = True
+                        self.explorer_publisher.publish(1)
+
+                        if abs(center_x - img_center_x) < 80:
+                                twist_msg.linear.x = self.forward_speed  # Move forward
+                                twist_msg.angular.z = 0.0
                     
-                    if not self.goingForBallFlag:
-                        if self.mode == "DEBUG":
-                                rospy.loginfo(f"Item area = {area}")
-                                rospy.loginfo("Red object detected! Skibidiing toward it.")
-                        self.searchingFlag = False
-                        self.exploringFlag = False
-
-                    self.goingForBallFlag= True
-
-                    self.sound_publisher.publish("SKIBIDI FORWARD")
-                elif center_x < img_center_x:
-                    twist_msg.linear.x = self.forward_speed
-                    twist_msg.angular.z = self.search_turn_speed # Turn left
+                                if not self.goingForBallFlag:
+                                        if self.mode == "DEBUG":
+                                                rospy.loginfo(f"Item area = {area}")
+                                                rospy.loginfo("Red object detected! Skibidiing toward it.")
+                                        self.searchingFlag = False
+                                        self.exploringFlag = False
+                                self.goingForBallFlag= True
+                                self.sound_publisher.publish("SKIBIDI FORWARD")
+                        elif center_x < img_center_x:
+                                twist_msg.linear.x = self.forward_speed
+                                twist_msg.angular.z = self.search_turn_speed # Turn left
+                        else:
+                                twist_msg.linear.x = self.forward_speed
+                                twist_msg.angular.z = self.search_turn_speed  # Turn right
                 else:
-                    twist_msg.linear.x = self.forward_speed
-                    twist_msg.angular.z = self.search_turn_speed  # Turn right
+                        twist_msg = self.searching(twist_msg)
         else:
                 twist_msg = self.searching(twist_msg)
         if self.mode == "DEBUG-0MOV":

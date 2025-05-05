@@ -36,16 +36,16 @@ class Explorer():
 				self.directionDecidedFlag = False
 			
 			if self.direction == "forward":
-				twist.linear.x = 0.5  # Move forward
+				twist.linear.x = 0.3  # Move forward
 				twist.angular.z = 0.0
 			elif self.direction == "backward":
 				twist.linear.x = -0.5  # Move backward
 				twist.angular.z = 0.0
 			elif self.direction == "forward-left":
-				twist.linear.x = 0.5  # Move backward
+				twist.linear.x = 0.3  # Move backward
 				twist.angular.z = 1
 			elif self.direction == "forward-right":
-				twist.linear.x = 0.5  # Move backward
+				twist.linear.x = 0.3 # Move backward
 				twist.angular.z = -1
 			elif self.direction == "left":
 				twist.linear.x = 0.0
